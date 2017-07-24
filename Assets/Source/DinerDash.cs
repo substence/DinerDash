@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 //Entry point for app
 public class DinerDash : MonoBehaviour
@@ -48,5 +47,7 @@ public class DinerDash : MonoBehaviour
     void OnNodeClicked(int x, int y)
     {
         map.MoveOccupantToNodeAt(x, y, character);
+        //Node characterNode = map.GetNodeFromGameObject(character);
+        map.DebugPath(0, 0, x, y);
     }
 }
