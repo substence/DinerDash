@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 
 //Entry point for app
 public class DinerDash : MonoBehaviour
@@ -9,8 +10,9 @@ public class DinerDash : MonoBehaviour
     const int WIDTH = 10;
     const int HEIGHT = 5;
     const int SIZE = 90;
+    const int TABLE_COUNT = 10;
     NodeMap map;
-    GameObject character;//No need to be a custom object for now
+    NodeOccupant character;
 
     void Start ()
     {
@@ -36,18 +38,46 @@ public class DinerDash : MonoBehaviour
         //create and place character
         if (characterSprite)
         {
-            character = (GameObject)Instantiate(characterSprite, new Vector3(0, 0, 0), Quaternion.identity);
-            map.SetOccupantAt(2, 2, character);
+            character = new NodeOccupant();
+            character.graphic = (GameObject)Instantiate(characterSprite, new Vector3(0, 0, 0), Quaternion.identity);
+            map.SetNodeOccupantAt(1, 1, character);
         }
 
         map.Build();
         map.OnNodeClicked += OnNodeClicked;
     }
 
+    void Update()
+    {
+        if (map != null)
+        {
+            map.Update();
+        }
+    }
+
     void OnNodeClicked(int x, int y)
     {
-        map.MoveOccupantToNodeAt(x, y, character);
-        //Node characterNode = map.GetNodeFromGameObject(character);
-        map.DebugPath(0, 0, x, y);
+        Node characterNode = character.owner;
+        if (characterNode != null)
+        {
+            List<Node> path = map.DebugPath(characterNode.x, characterNode.y, x, y);
+            character.path = path;
+        }
+    }
+
+    void Scramble(int tableCount)
+    {
+        map.ClearMap();
+        for (int i = 0; i < tableCount; i++)
+        {
+            map.SetPathingAt(Random.Range(0, WIDTH), Random.Range(0, HEIGHT), false);
+        }
+        map.Build();
+    }
+
+    //click handler for button
+    public void OnScrambleButtonClicked()
+    {
+        Scramble(TABLE_COUNT);
     }
 }
