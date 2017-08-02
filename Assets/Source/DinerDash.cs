@@ -14,7 +14,7 @@ public class DinerDash : MonoBehaviour
     NodeMap map;
     NodeOccupant character;
 
-    void Start ()
+    private void Start ()
     {
         //create map
         map = new NodeMap();
@@ -47,7 +47,7 @@ public class DinerDash : MonoBehaviour
         map.OnNodeClicked += OnNodeClicked;
     }
 
-    void Update()
+    private void Update()
     {
         if (map != null)
         {
@@ -55,17 +55,23 @@ public class DinerDash : MonoBehaviour
         }
     }
 
-    void OnNodeClicked(int x, int y)
+    private void OnNodeClicked(int x, int y)
     {
         Node characterNode = character.owner;
         if (characterNode != null)
         {
-            List<Node> path = map.DebugPath(characterNode.x, characterNode.y, x, y);
+            List<Node> path = map.GetPath(characterNode.x, characterNode.y, x, y);
             character.path = path;
         }
     }
 
-    void Scramble(int tableCount)
+    //click handler for button
+    public void OnScrambleButtonClicked()
+    {
+        Scramble(TABLE_COUNT);
+    }
+
+    private void Scramble(int tableCount)
     {
         map.ClearMap();
         for (int i = 0; i < tableCount; i++)
@@ -73,11 +79,5 @@ public class DinerDash : MonoBehaviour
             map.SetPathingAt(Random.Range(0, WIDTH), Random.Range(0, HEIGHT), false);
         }
         map.Build();
-    }
-
-    //click handler for button
-    public void OnScrambleButtonClicked()
-    {
-        Scramble(TABLE_COUNT);
     }
 }

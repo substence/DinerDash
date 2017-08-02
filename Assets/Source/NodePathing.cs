@@ -57,8 +57,7 @@ public class NodePathing
 
         if (previousNode[to] == null)
         {
-            return null;
-            //no route found, do something
+            return null;//no route found
         }
 
         List<Node> path = new List<Node>();

@@ -30,8 +30,7 @@ public class NodeMap
             for (int y = 0; y < height; y++)
             {
                 nodes[x, y] = new Node();
-                nodes[x, y].neighbors = new List<Node>();//optimize
-
+                nodes[x, y].neighbors = new List<Node>();
             }
         }
 
@@ -41,7 +40,7 @@ public class NodeMap
         {
             for (int y = 0; y < this.height; y++)
             {
-                /*//4-way, can't travel diagonol
+                /*//4-way, can't travel diagonal
                 if (x > 0)
                     nodes[x, y].neighbors.Add(nodes[x - 1, y]);
                 if (x < width - 1)
@@ -99,7 +98,10 @@ public class NodeMap
                 }
             }
         }
-        //validate all nodes
+        foreach (Node node in nodes)
+        {
+            ValidateNode(node);
+        }        
     }
 
     public void Update()
@@ -122,32 +124,14 @@ public class NodeMap
                     if (Vector3.Distance(currentPosition, targetPosition) < 0.1f)
                     {
                         occupant.path.RemoveAt(0);
-                        Node Node = occupant.GetNextNode();
-                        if (targetNode != null)
-                        {
-                            node.occupant = null;
-                            SetNodeOccupant(targetNode, occupant);
-                        }
+                        node.occupant = null;
+                        SetNodeOccupant(targetNode, occupant);
                     }
                 }
                 else
                 {
                     occupant.graphic.transform.position = GetWorldPositionOfNode(node);
                 }
-            }
-        }
-    }
-
-    private void ValidateNode(Node node)
-    {
-        NodeOccupant occupant = node.GetFirstOccupant();
-        if (!node.isPathable && occupant != null)
-        {
-            Node validNode = NodePathing.FindClosestPathableNode(this, node);
-            if (validNode != null)
-            {
-                node.occupant = null;
-                SetNodeOccupant(validNode, occupant);
             }
         }
     }
@@ -172,20 +156,19 @@ public class NodeMap
         }
     }
 
-    private void SetNodeOccupant(Node node, NodeOccupant occupant)
-    {
-        node.occupant = occupant;
-        occupant.owner = node;
-    }
-    
     //this doesn't clear occupants, so they could end up in an unpathable node
     public void ClearMap()
     {
         foreach (Node node in nodes)
         {
             node.isPathable = true;
+            NodeOccupant occupant = node.GetFirstOccupant();
+            if (occupant != null)
+            {
+                occupant.path = null;
+            }
         }
-        
+
         foreach (GameObject gameObject in gameObjectsToNodes.Keys)
         {
             GameObject.Destroy(gameObject);
@@ -194,7 +177,39 @@ public class NodeMap
         gameObjectsToNodes = new Dictionary<GameObject, Node>();
     }
 
-    void OnNodeMouseDown(GameObject gameObject)
+    public List<Node> GetPath(int fromX, int fromY, int toX, int toY)
+    {
+        Node from = GetNodeAt(fromX, fromY);
+        Node to = GetNodeAt(toX, toY);
+        return NodePathing.GetPath(nodes, from, to);
+    }
+
+    public Node GetNodeAt(int x, int y)
+    {
+        return nodes[x, y];
+    }
+
+    private void ValidateNode(Node node)
+    {
+        NodeOccupant occupant = node.GetFirstOccupant();
+        if (!node.isPathable && occupant != null)
+        {
+            Node validNode = NodePathing.FindClosestPathableNode(this, node);
+            if (validNode != null)
+            {
+                node.occupant = null;
+                SetNodeOccupant(validNode, occupant);
+            }
+        }
+    }
+
+    private void SetNodeOccupant(Node node, NodeOccupant occupant)
+    {
+        node.occupant = occupant;
+        occupant.owner = node;
+    }
+
+    private void OnNodeMouseDown(GameObject gameObject)
     {
         if (OnNodeClicked != null)
         {
@@ -206,39 +221,17 @@ public class NodeMap
         }
     }
 
-    public List<Node> DebugPath(int fromX, int fromY, int toX, int toY)
-    {
-        Node from = GetNodeAt(fromX, fromY);
-        Node to = GetNodeAt(toX, toY);
-        List<Node> path = NodePathing.GetPath(nodes, from, to);
-        if (path != null)
-        {
-            for (int i = 0; i < path.Count - 1; i++)
-            {
-                Vector3 start = new Vector3(path[i].x, path[i].y, -0.5f);//node position to world position
-                Vector3 end = new Vector3(path[i + 1].x, path[i + 1].y, -0.5f);
-                Debug.DrawLine(start, end, Color.blue, 10.0f);
-            }
-        }
-        return path;
-    }
-
-    public Node GetNodeAt(int x, int y)
-    {
-        return nodes[x, y];
-    }
-
-    private Node GetNodeFromGameObject(GameObject gameObject)//shouldn't be public?
+    private Node GetNodeFromGameObject(GameObject gameObject)
     {
         return (Node)gameObjectsToNodes[gameObject];
     }
 
-    public Vector3 GetWorldPositionOfNode(Node node)
+    private Vector3 GetWorldPositionOfNode(Node node)
     {
         return new Vector3(node.x, node.y, 0.0f);
     }
 
-    public Node GetNodeFromOccupant(NodeOccupant occupant)
+    private Node GetNodeFromOccupant(NodeOccupant occupant)
     {
         for (int x = 0; x < this.width; x++)
         {
