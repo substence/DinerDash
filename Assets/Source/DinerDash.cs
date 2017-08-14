@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System.Timers;
+using System.Collections;
 
 //Entry point for app
 public class DinerDash : MonoBehaviour
@@ -57,18 +59,32 @@ public class DinerDash : MonoBehaviour
 
     private void OnNodeClicked(int x, int y)
     {
-        Node characterNode = character.owner;
-        if (characterNode != null)
+        if (character == null)
         {
-            List<Node> path = map.GetPath(characterNode.x, characterNode.y, x, y);
-            character.path = path;
+            return;
         }
+        character.target = map.GetNodeAt(x, y);
     }
 
-    //click handler for button
     public void OnScrambleButtonClicked()
     {
         Scramble(TABLE_COUNT);
+    }
+
+    public void OnGhostButtonClicked()
+    {
+        if (character == null)
+        {
+            return;
+        }
+        StartCoroutine(GhostCoroutine());
+    }
+
+    IEnumerator GhostCoroutine()
+    {
+        character.doesBlockPathing = false;
+        yield return new WaitForSeconds(5.0f);
+        character.doesBlockPathing = true;
     }
 
     private void Scramble(int tableCount)

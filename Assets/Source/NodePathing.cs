@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public class NodePathing
 {
     //Dijkstra
-    public static List<Node> GetPath(Node[,] map, Node from, Node to)
+    public static List<Node> GetPath(Node[,] map, Node from, Node to, NodeOccupant occupant = null)
     {
         Dictionary<Node, float> distance = new Dictionary<Node, float>();
         Dictionary<Node, Node> previousNode = new Dictionary<Node, Node>();
@@ -45,7 +45,7 @@ public class NodePathing
 
             foreach (Node node in closestNode.neighbors)
             {
-                float alt = distance[closestNode] + GetPathingCost(closestNode, node);
+                float alt = distance[closestNode] + GetPathingCost(closestNode, node, occupant);
 
                 if (alt < distance[node])
                 {
@@ -73,11 +73,12 @@ public class NodePathing
         return path;
     }
 
-    private static float GetPathingCost(Node from, Node to)
+    private static float GetPathingCost(Node from, Node to, NodeOccupant occupant = null)
     {
         float cost = 1;//eventually node types will have a different pathing cost by default
 
-        if (!to.isPathable)
+        bool doesOccupantBlockPathing = occupant != null && occupant.doesBlockPathing;
+        if (!to.isPathable && doesOccupantBlockPathing)
             return Mathf.Infinity;
 
         if (from.x != to.x && from.y != to.y)

@@ -111,28 +111,42 @@ public class NodeMap
             NodeOccupant occupant = node.GetFirstOccupant();
             if (occupant != null)
             {
-                Node targetNode = occupant.GetNextNode();
-                if (targetNode != null)
-                {
-                    Vector3 currentPosition = occupant.graphic.transform.position;
-                    Vector3 targetPosition = GetWorldPositionOfNode(targetNode);
-
-                    //animate towards target node
-                    occupant.graphic.transform.position = Vector3.Lerp(currentPosition, targetPosition, 5f * Time.deltaTime);
-
-                    //if close enough to target node, update path
-                    if (Vector3.Distance(currentPosition, targetPosition) < 0.1f)
-                    {
-                        occupant.path.RemoveAt(0);
-                        node.occupant = null;
-                        SetNodeOccupant(targetNode, occupant);
-                    }
-                }
-                else
-                {
-                    occupant.graphic.transform.position = GetWorldPositionOfNode(node);
-                }
+                UpdateOccupant(node, occupant);
             }
+        }
+    }
+
+    //This probably shouldn't do any rendering changes, perhaps NodeRenderer?
+    private void UpdateOccupant(Node node, NodeOccupant occupant)
+    {
+        //Calculate path to target
+        Node targetNode = occupant.target;
+        if (targetNode != null && occupant.isPathingDirty)
+        {
+            occupant.path = NodePathing.GetPath(nodes, node, targetNode, occupant);
+            occupant.isPathingDirty = false;//perhaps the setter for 'path' should do this automatically?
+        }
+
+        //Move towards next node
+        Node nextNode = occupant.GetNextNode();
+        if (nextNode != null)
+        {
+            Vector3 currentPosition = occupant.graphic.transform.position;
+            Vector3 targetPosition = GetWorldPositionOfNode(nextNode);
+
+            occupant.graphic.transform.position = Vector3.Lerp(currentPosition, targetPosition, 5f * Time.deltaTime);
+
+            //if close enough to target node, update path
+            if (Vector3.Distance(currentPosition, targetPosition) < 0.1f)
+            {
+                occupant.path.RemoveAt(0);
+                node.occupant = null;
+                SetNodeOccupant(nextNode, occupant);
+            }
+        }
+        else
+        {
+            occupant.graphic.transform.position = GetWorldPositionOfNode(node);
         }
     }
 
@@ -175,13 +189,6 @@ public class NodeMap
         }
 
         gameObjectsToNodes = new Dictionary<GameObject, Node>();
-    }
-
-    public List<Node> GetPath(int fromX, int fromY, int toX, int toY)
-    {
-        Node from = GetNodeAt(fromX, fromY);
-        Node to = GetNodeAt(toX, toY);
-        return NodePathing.GetPath(nodes, from, to);
     }
 
     public Node GetNodeAt(int x, int y)
